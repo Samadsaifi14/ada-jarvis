@@ -7,9 +7,11 @@ import numpy as np
 
 
 class AudioIO:
-    def __init__(self, sample_rate: int = 16000, channels: int = 1):
+    def __init__(self, sample_rate: int = 16000, channels: int = 1, input_device: int | None = None):
         self.sample_rate = sample_rate
         self.channels = channels
+        self.input_device = input_device
+        self.last_stats: dict[str, float] = {}
 
     def record_wav(self, seconds: float = 6.0, output_path: str | None = None) -> str:
         try:
@@ -29,8 +31,13 @@ class AudioIO:
             samplerate=self.sample_rate,
             channels=self.channels,
             dtype="float32",
+            device=self.input_device,
         )
         sd.wait()
+
+        peak = float(np.max(np.abs(audio))) if audio.size else 0.0
+        rms = float(np.sqrt(np.mean(np.square(audio)))) if audio.size else 0.0
+        self.last_stats = {"peak": peak, "rms": rms}
 
         if output_path is None:
             fd = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
@@ -64,6 +71,7 @@ class AudioIO:
             raise RuntimeError(
                 "Voice dependencies are missing. Run: pip install -e .[voice]"
             ) from exc
+        default_input, default_output = sd.default.device
         result = []
         for index, device in enumerate(sd.query_devices()):
             result.append(
@@ -72,6 +80,8 @@ class AudioIO:
                     "name": device["name"],
                     "inputs": int(device["max_input_channels"]),
                     "outputs": int(device["max_output_channels"]),
+                    "default_input": index == default_input,
+                    "default_output": index == default_output,
                 }
             )
         return result
