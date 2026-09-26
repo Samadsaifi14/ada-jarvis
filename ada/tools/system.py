@@ -9,7 +9,6 @@ from typing import Any
 
 from ada.config import Settings
 
-
 SAFE_COMMAND_PREFIXES = (
     ("git", "status"),
     ("git", "log"),
