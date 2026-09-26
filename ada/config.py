@@ -52,6 +52,7 @@ class Settings(BaseSettings):
     whisper_device: str = "cuda"
     whisper_compute_type: str = "float16"
     whisper_fallback_cpu: bool = True
+    audio_input_device: int | None = None
 
     @property
     def root_paths(self) -> list[Path]:
