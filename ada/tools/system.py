@@ -9,6 +9,7 @@ from typing import Any
 
 from ada.config import Settings
 
+
 SAFE_COMMAND_PREFIXES = (
     ("git", "status"),
     ("git", "log"),
@@ -61,5 +62,9 @@ class SystemTools:
             if not any(candidate == root or root in candidate.parents for root in self.settings.root_paths):
                 raise PermissionError("cwd is outside ADA_ALLOWED_ROOTS")
             workdir = str(candidate)
-        proc = subprocess.run(parts, cwd=workdir, capture_output=True, text=True, timeout=120, shell=False)
-        return {"returncode": proc.returncode, "stdout": proc.stdout[-12000:], "stderr": proc.stderr[-12000:]}
+        proc = subprocess.run(parts, cwd=workdir, capture_output=True, text=True, timeout=120, shell=False, check=False)
+        return {
+            "returncode": proc.returncode,
+            "stdout": proc.stdout[-12000:],
+            "stderr": proc.stderr[-12000:],
+        }

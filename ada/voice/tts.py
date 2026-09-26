@@ -14,9 +14,8 @@ class PiperTTS:
         if not self.model:
             raise RuntimeError("ADA_PIPER_MODEL is not configured")
         if output_path is None:
-            fd = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
-            output_path = fd.name
-            fd.close()
+            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as fd:
+                output_path = fd.name
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)
         proc = subprocess.run(
             [self.executable, "--model", self.model, "--output_file", output_path],
@@ -25,6 +24,7 @@ class PiperTTS:
             capture_output=True,
             timeout=120,
             shell=False,
+            check=False,
         )
         if proc.returncode != 0:
             raise RuntimeError(proc.stderr.strip() or "Piper failed")

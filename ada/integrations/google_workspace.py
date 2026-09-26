@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -36,7 +36,7 @@ class GoogleWorkspace:
 
     def today(self) -> dict[str, Any]:
         creds = self._credentials()
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         end = now + timedelta(hours=24)
 
         calendar = build("calendar", "v3", credentials=creds, cache_discovery=False)
@@ -73,9 +73,7 @@ class GoogleWorkspace:
         refs = gmail.users().messages().list(userId="me", q=query, maxResults=max_results).execute().get("messages", [])
         result = []
         for ref in refs:
-            msg = gmail.users().messages().get(
-                userId="me", id=ref["id"], format="metadata", metadataHeaders=["From", "Subject", "Date"]
-            ).execute()
+            msg = gmail.users().messages().get(userId="me", id=ref["id"], format="metadata", metadataHeaders=["From", "Subject", "Date"]).execute()
             headers = {h["name"].lower(): h["value"] for h in msg.get("payload", {}).get("headers", [])}
             result.append({
                 "id": ref["id"],

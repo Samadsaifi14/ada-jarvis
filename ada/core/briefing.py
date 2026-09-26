@@ -14,14 +14,14 @@ class BriefingService:
         data: dict[str, Any] = {"tasks": self.runtime.db.list_tasks()}
         try:
             data["google"] = self.runtime.google.today()
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - one unavailable integration must not cancel briefing
             data["google_error"] = str(exc)
 
         repos = []
         for repo in self.runtime.settings.github_repo_list:
             try:
                 repos.append(await self.runtime.github.repo_status(repo))
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001 - isolate failure per monitored repository
                 repos.append({"repo": repo, "error": str(exc)})
         data["github"] = repos
         return data

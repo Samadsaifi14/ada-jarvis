@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import inspect
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-from typing import Any, Awaitable, Callable
+from typing import Any
 
 from ada.core.db import Database
 from ada.core.safety import Risk, SafetyEngine
@@ -54,7 +55,13 @@ class ToolRegistry:
         if decision.needs_approval:
             approval_id = self.db.create_approval(name, args)
             self.db.audit(actor, name, decision.risk, "approval_required", {"approval_id": approval_id, "args": args})
-            return {"ok": False, "approval_required": True, "approval_id": approval_id, "action": name, "args": args}
+            return {
+                "ok": False,
+                "approval_required": True,
+                "approval_id": approval_id,
+                "action": name,
+                "args": args,
+            }
 
         try:
             result = tool.handler(**args)
@@ -62,7 +69,7 @@ class ToolRegistry:
                 result = await result
             self.db.audit(actor, name, decision.risk, "success", {"args": args})
             return {"ok": True, "result": result}
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - tool boundary isolates provider failures
             self.db.audit(actor, name, decision.risk, "error", {"args": args, "error": str(exc)})
             return {"ok": False, "error": str(exc)}
 
@@ -80,6 +87,6 @@ class ToolRegistry:
                 result = await result
             self.db.audit(actor, approval["action"], Risk.ASK, "approved_success", {"args": args})
             return {"ok": True, "result": result}
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - approved tool boundary isolates failures
             self.db.audit(actor, approval["action"], Risk.ASK, "approved_error", {"args": args, "error": str(exc)})
             return {"ok": False, "error": str(exc)}

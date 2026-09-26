@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Optional
-
 import typer
 import uvicorn
 from rich import print
@@ -15,13 +13,15 @@ app = typer.Typer(help="ADA personal operating agent")
 
 
 @app.command()
-def serve(host: Optional[str] = None, port: Optional[int] = None):
+def serve(host: str | None = None, port: int | None = None):
+    """Run the local ADA API and scheduler."""
     settings = runtime.settings
     uvicorn.run("ada.api.app:app", host=host or settings.host, port=port or settings.port, reload=False)
 
 
 @app.command()
 def chat(message: str):
+    """Talk to ADA from the terminal."""
     result = asyncio.run(runtime.orchestrator.chat(message))
     print(result["text"])
     if result.get("pending_approvals"):
@@ -29,7 +29,7 @@ def chat(message: str):
 
 
 @app.command("task-add")
-def task_add(title: str, due: Optional[str] = None, notes: str = ""):
+def task_add(title: str, due: str | None = None, notes: str = ""):
     print(runtime.db.add_task(title, due, notes))
 
 
