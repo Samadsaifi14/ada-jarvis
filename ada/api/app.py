@@ -6,6 +6,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 from ada.core.briefing import BriefingService
+from ada.core.doctor import run_doctor
 from ada.core.runtime import Runtime
 from ada.core.scheduler import AdaScheduler
 
@@ -21,7 +22,7 @@ async def lifespan(app: FastAPI):
     scheduler.stop()
 
 
-app = FastAPI(title="ADA Personal Operating Agent", version="0.1.0", lifespan=lifespan)
+app = FastAPI(title="ADA Personal Operating Agent", version="0.2.0", lifespan=lifespan)
 
 
 class ChatRequest(BaseModel):
@@ -40,7 +41,12 @@ class ApprovalDecision(BaseModel):
 
 @app.get("/health")
 async def health():
-    return {"ok": True, "ollama": await runtime.llm.health(), "version": "0.1.0"}
+    return {"ok": True, "ollama": await runtime.llm.health(), "version": "0.2.0"}
+
+
+@app.get("/v1/doctor")
+async def doctor():
+    return await run_doctor(runtime)
 
 
 @app.post("/v1/chat")
