@@ -13,11 +13,12 @@ class VoiceLoop:
     def __init__(self, runtime: Runtime):
         self.runtime = runtime
         settings = runtime.settings
-        self.audio = AudioIO()
+        self.audio = AudioIO(input_device=settings.audio_input_device)
         self.stt = FasterWhisperSTT(
             settings.whisper_model,
             settings.whisper_device,
             settings.whisper_compute_type,
+            settings.whisper_fallback_cpu,
         )
         self.tts = PiperTTS(settings.piper_exe, settings.piper_model)
 
@@ -25,11 +26,22 @@ class VoiceLoop:
         input_path = self.audio.record_wav(seconds=seconds)
         try:
             transcript = self.stt.transcribe_wav(input_path)
+            stats = self.audio.last_stats
             if not transcript:
-                return {"transcript": "", "text": "I did not hear any speech.", "pending_approvals": []}
+                return {
+                    "transcript": "",
+                    "text": (
+                        "I did not hear any speech. "
+                        f"Microphone peak={stats.get('peak', 0.0):.4f}, "
+                        f"rms={stats.get('rms', 0.0):.4f}."
+                    ),
+                    "audio": stats,
+                    "pending_approvals": [],
+                }
 
             result = await self.runtime.orchestrator.chat(transcript)
             result["transcript"] = transcript
+            result["audio"] = stats
 
             if speak and result.get("text") and self.runtime.settings.piper_model:
                 output_path = self.tts.synthesize(result["text"])
