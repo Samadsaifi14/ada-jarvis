@@ -96,7 +96,7 @@ function authenticate(req, res, next) {
 
 app.use(rateLimit);
 app.use(authenticate);
-app.use(express.json({ limit: '64kb' }));
+app.use(express.json({ limit: '80mb' }));
 
 async function adaFetch(path, { method = 'POST', body, timeoutMs = FORWARD_TIMEOUT_MS } = {}) {
   const headers = { 'Content-Type': 'application/json' };
@@ -183,6 +183,23 @@ app.post('/execute', async (req, res) => {
   log(`execute ${action} from ${req.ip}: ${JSON.stringify(actionArgs).slice(0, 160)}`);
   try {
     const result = await adaFetch('/v1/tools/execute', { body: { tool: action, args: actionArgs }, timeoutMs: CHAT_TIMEOUT_MS });
+    res.json({ success: true, result });
+  } catch (error) {
+    adaDown(res, error);
+  }
+});
+
+app.post('/speech', async (req, res) => {
+  const { audioBase64, mime } = req.body || {};
+  if (typeof audioBase64 !== 'string' || audioBase64.length < 16) {
+    return res.status(400).json({ success: false, error: 'No audio payload provided.' });
+  }
+  log(`speech transcribe from ${req.ip}: ${audioBase64.length} base64 chars (${mime || 'unknown'})`);
+  try {
+    const result = await adaFetch('/v1/speech/transcribe', {
+      body: { audio_base64: audioBase64, mime: mime || 'audio/webm' },
+      timeoutMs: CHAT_TIMEOUT_MS,
+    });
     res.json({ success: true, result });
   } catch (error) {
     adaDown(res, error);

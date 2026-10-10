@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request
@@ -57,6 +58,11 @@ class ApprovalDecision(BaseModel):
     approved: bool
 
 
+class AudioTranscribe(BaseModel):
+    audio_base64: str = Field(min_length=16, max_length=70_000_000)
+    mime: str = Field(default="audio/webm", max_length=50)
+
+
 @app.get("/health")
 async def health():
     return {"ok": True, "ollama": await runtime.llm.health(), "version": "0.2.0"}
@@ -103,6 +109,51 @@ def complete_task(task_id: str):
 @app.get("/v1/briefing")
 async def briefing():
     return {"text": await briefing_service.generate(), "sources": await briefing_service.collect()}
+
+
+@app.post("/v1/speech/transcribe")
+async def speech_transcribe(req: AudioTranscribe):
+    import base64
+    import tempfile
+
+    try:
+        audio_bytes = base64.b64decode(req.audio_base64, validate=True)
+    except Exception as exc:  # noqa: BLE001 - malformed client payload is not a server failure
+        return {"ok": False, "error": f"Invalid audio payload: {exc}"}
+    if len(audio_bytes) > 50_000_000:
+        return {"ok": False, "error": "Audio too large (max 50 MB)."}
+    if not audio_bytes:
+        return {"ok": False, "error": "Empty audio payload."}
+
+    ext = "webm" if "webm" in req.mime else "ogg" if "ogg" in req.mime else "wav"
+    try:
+        from ada.voice.stt import FasterWhisperSTT
+
+        settings = runtime.settings
+        service = FasterWhisperSTT(
+            settings.whisper_model,
+            settings.whisper_device,
+            settings.whisper_compute_type,
+            settings.whisper_fallback_cpu,
+        )
+        with tempfile.NamedTemporaryFile(suffix=f".{ext}", delete=False) as fd:
+            fd.write(audio_bytes)
+            fd.flush()
+            temp_path = Path(fd.name)
+        try:
+            text = service.transcribe_wav(str(temp_path))
+        finally:
+            temp_path.unlink(missing_ok=True)
+        return {"ok": True, "text": text}
+    except ModuleNotFoundError as exc:
+        name = str(exc).lower()
+        if "faster_whisper" in name or "ctranslate2" in name:
+            return {"ok": False, "error": "Voice dependencies missing. Run: pip install -e .[voice]"}
+        raise
+    except ImportError:
+        return {"ok": False, "error": "Voice dependencies missing. Run: pip install -e .[voice]"}
+    except Exception as exc:  # noqa: BLE001 - transcription failure is reported to the caller
+        return {"ok": False, "error": f"Transcription failed: {exc}"}
 
 
 @app.post("/v1/approvals/{approval_id}")

@@ -62,6 +62,22 @@ function splitSentences(text: string, maxChunk = 180): string[] {
   return chunks;
 }
 
+const AUDIO_MIME_TYPES = [
+  'audio/webm;codecs=opus',
+  'audio/ogg;codecs=opus',
+  'audio/webm',
+  'audio/ogg',
+];
+
+function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(String(reader.result).split(',')[1] ?? '');
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
+}
+
 const shell: CSSProperties = {
   border: '1px solid #1f2b36',
   background: '#0f151b',
@@ -76,10 +92,12 @@ export default function HomePage() {
   const [output, setOutput] = useState('');
   const [approvals, setApprovals] = useState<Approval[]>([]);
   const [listening, setListening] = useState(false);
+  const [recording, setRecording] = useState(false);
   const [speaking, setSpeaking] = useState(false);
   const [autoSpeak, setAutoSpeak] = useState(true);
   const [speechError, setSpeechError] = useState('');
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const speakSessionRef = useRef(0);
 
   useEffect(() => {
@@ -92,6 +110,8 @@ export default function HomePage() {
     () => () => {
       speakSessionRef.current += 1;
       recognitionRef.current?.abort();
+      const recorder = mediaRecorderRef.current;
+      if (recorder && recorder.state !== 'inactive') recorder.stop();
       if ('speechSynthesis' in window) window.speechSynthesis.cancel();
     },
     []
@@ -177,17 +197,7 @@ export default function HomePage() {
     }
   }
 
-  function toggleListen() {
-    const Recognizer = getSpeechRecognition();
-    if (!Recognizer) {
-      setSpeechError('Speech recognition is not supported in this browser. Try Chrome or Edge.');
-      return;
-    }
-    if (listening) {
-      recognitionRef.current?.abort();
-      return;
-    }
-    setSpeechError('');
+  function startWebSpeech(Recognizer: new () => SpeechRecognitionLike) {
     const rec = new Recognizer();
     rec.lang = 'en-US';
     rec.interimResults = true;
@@ -215,6 +225,89 @@ export default function HomePage() {
     recognitionRef.current = rec;
     rec.start();
     setListening(true);
+  }
+
+  function stopRecording() {
+    const recorder = mediaRecorderRef.current;
+    if (recorder && recorder.state !== 'inactive') recorder.stop();
+  }
+
+  async function startRecording() {
+    if (typeof MediaRecorder === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
+      setSpeechError('No microphone recording API is available in this browser.');
+      return;
+    }
+    setSpeechError('');
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mimeType = AUDIO_MIME_TYPES.find((type) => MediaRecorder.isTypeSupported(type)) ?? '';
+      const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+      mediaRecorderRef.current = recorder;
+      const chunks: BlobPart[] = [];
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) chunks.push(event.data);
+      };
+      recorder.onstop = async () => {
+        stream.getTracks().forEach((track) => track.stop());
+        mediaRecorderRef.current = null;
+        setRecording(false);
+        const blob = new Blob(chunks, { type: mimeType || 'audio/webm' });
+        if (!blob.size) {
+          setSpeechError('No audio was captured.');
+          return;
+        }
+        setBusy(true);
+        setOutput('Transcribing with local Whisper…');
+        try {
+          const audioBase64 = await blobToBase64(blob);
+          const res = await fetch('/api/speech', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ audioBase64, mime: blob.type }),
+          });
+          const data = await res.json();
+          const text = typeof data?.result?.text === 'string' ? data.result.text.trim() : '';
+          if (text) {
+            setInput(text);
+            send(text);
+          } else {
+            setOutput(JSON.stringify(data, null, 2));
+            setSpeechError(typeof data?.result?.error === 'string' ? data.result.error : data?.error || 'Transcription failed.');
+          }
+        } catch (err) {
+          setOutput(String(err));
+          setSpeechError('Transcription request failed.');
+        } finally {
+          setBusy(false);
+        }
+      };
+      recorder.onerror = () => {
+        setRecording(false);
+        mediaRecorderRef.current = null;
+        setSpeechError('Microphone recording failed.');
+      };
+      recorder.start();
+      setRecording(true);
+    } catch {
+      setSpeechError('Microphone access was denied or unavailable.');
+    }
+  }
+
+  function toggleListen() {
+    if (recording) {
+      stopRecording();
+      return;
+    }
+    if (listening) {
+      recognitionRef.current?.abort();
+      return;
+    }
+    const Recognizer = getSpeechRecognition();
+    if (Recognizer) {
+      startWebSpeech(Recognizer);
+      return;
+    }
+    startRecording();
   }
 
   function toggleSpeak() {
@@ -292,8 +385,8 @@ export default function HomePage() {
             onClick={toggleListen}
             disabled={busy}
             style={{
-              background: listening ? '#7f1d1d' : '#131a21',
-              color: listening ? '#fecaca' : '#8296a8',
+              background: listening || recording ? '#7f1d1d' : '#131a21',
+              color: listening || recording ? '#fecaca' : '#8296a8',
               border: '1px solid #1f2b36',
               borderRadius: 4,
               padding: '6px 14px',
@@ -303,7 +396,7 @@ export default function HomePage() {
               textTransform: 'uppercase',
             }}
           >
-            {listening ? 'Stop Mic' : 'Mic'}
+            {recording ? 'Stop Rec' : listening ? 'Stop Mic' : 'Mic'}
           </button>
           <button
             onClick={toggleSpeak}
@@ -323,7 +416,11 @@ export default function HomePage() {
           </button>
           {speaking && <span style={{ fontSize: 11, color: '#4ade80' }}>Talking…</span>}
           <span style={{ fontSize: 11, color: '#5b6b7a' }}>
-            {listening ? 'Listening — speak now' : 'Mic uses browser speech; press speak to hear responses'}
+            {recording
+              ? 'Recording — press again to stop and transcribe'
+              : listening
+                ? 'Listening — speak now'
+                : 'Mic uses browser speech, or local Whisper when unsupported'}
           </span>
         </div>
         {speechError && <div style={{ fontSize: 11, color: '#f87171', marginBottom: 8 }}>{speechError}</div>}
