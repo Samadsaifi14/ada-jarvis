@@ -10,8 +10,6 @@ from rich.table import Table
 from ada.api.app import runtime
 from ada.core.briefing import BriefingService
 from ada.core.doctor import run_doctor
-from ada.voice.io import AudioIO
-from ada.voice.loop import VoiceLoop
 
 app = typer.Typer(help="ADA personal operating agent")
 
@@ -38,6 +36,8 @@ def voice(
     no_speak: bool = typer.Option(False, help="Do not synthesize/play ADA's response."),
 ):
     """Run the interactive microphone -> Whisper -> ADA -> Piper loop."""
+    from ada.voice.loop import VoiceLoop
+
     VoiceLoop(runtime).run(seconds=seconds, speak=not no_speak)
 
 
@@ -47,6 +47,8 @@ def voice_once(
     no_speak: bool = typer.Option(False),
 ):
     """Record one microphone turn, transcribe it and ask ADA."""
+    from ada.voice.loop import VoiceLoop
+
     result = asyncio.run(VoiceLoop(runtime).once(seconds=seconds, speak=not no_speak))
     if result.get("transcript"):
         print(f"[bold]You:[/bold] {result['transcript']}")
@@ -58,6 +60,8 @@ def voice_once(
 @app.command("audio-devices")
 def audio_devices():
     """List microphone/speaker devices visible to ADA."""
+    from ada.voice.io import AudioIO
+
     table = Table("Index", "Device", "Inputs", "Outputs")
     for item in AudioIO.devices():
         table.add_row(str(item["index"]), item["name"], str(item["inputs"]), str(item["outputs"]))

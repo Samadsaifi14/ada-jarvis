@@ -35,7 +35,7 @@ class AudioIO:
                 "the leftmost Index value for your microphone — not the Inputs count."
             )
 
-        default_rate = int(round(float(info["default_samplerate"])))
+        default_rate = round(float(info["default_samplerate"]))
         channel_candidates = []
         for channels in (1, min(2, max_inputs), max_inputs):
             if channels > 0 and channels not in channel_candidates:
@@ -57,7 +57,7 @@ class AudioIO:
                         samplerate=rate,
                     )
                     return device_index, rate, channels, str(info["name"])
-                except Exception as exc:
+                except Exception as exc:  # noqa: BLE001 - candidate formats are tested individually
                     errors.append(f"{rate}Hz/{channels}ch: {exc}")
 
         details = "; ".join(errors[-4:])
@@ -116,9 +116,8 @@ class AudioIO:
         }
 
         if output_path is None:
-            fd = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
-            output_path = fd.name
-            fd.close()
+            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as fd:
+                output_path = fd.name
 
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)
         pcm16 = np.clip(audio, -1.0, 1.0)
@@ -158,7 +157,7 @@ class AudioIO:
                     "outputs": int(device["max_output_channels"]),
                     "default_input": index == default_input,
                     "default_output": index == default_output,
-                    "default_samplerate": int(round(float(device["default_samplerate"]))),
+                    "default_samplerate": round(float(device["default_samplerate"])),
                 }
             )
         return result

@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
+from typing import Any
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from ada.core.briefing import BriefingService
@@ -24,9 +26,25 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="ADA Personal Operating Agent", version="0.2.0", lifespan=lifespan)
 
+API_TOKEN = runtime.settings.api_token
+
+
+@app.middleware("http")
+async def require_api_token(request: Request, call_next):
+    if API_TOKEN and request.url.path.startswith("/v1/"):
+        auth = request.headers.get("authorization", "")
+        if auth != f"Bearer {API_TOKEN}":
+            return JSONResponse({"detail": "Unauthorized"}, status_code=401)
+    return await call_next(request)
+
 
 class ChatRequest(BaseModel):
     message: str = Field(min_length=1, max_length=20000)
+
+
+class ToolExecute(BaseModel):
+    tool: str = Field(min_length=1, max_length=100)
+    args: dict[str, Any] = Field(default_factory=dict)
 
 
 class TaskCreate(BaseModel):
@@ -52,6 +70,16 @@ async def doctor():
 @app.post("/v1/chat")
 async def chat(req: ChatRequest):
     return await runtime.orchestrator.chat(req.message)
+
+
+@app.post("/v1/tools/execute")
+async def execute_tool(req: ToolExecute):
+    return await runtime.tools.execute(req.tool, req.args, actor="api")
+
+
+@app.get("/v1/approvals")
+def list_approvals(status: str = "pending", limit: int = 100):
+    return runtime.db.list_approvals(None if status == "all" else status, limit)
 
 
 @app.get("/v1/tasks")

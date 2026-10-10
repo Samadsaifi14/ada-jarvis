@@ -138,6 +138,23 @@ class Database:
         result["args"] = json.loads(result.pop("args_json"))
         return result
 
+    def list_approvals(self, status: str | None = "pending", limit: int = 100) -> list[dict[str, Any]]:
+        query = "SELECT * FROM approvals"
+        params: list[Any] = []
+        if status is not None:
+            query += " WHERE status=?"
+            params.append(status)
+        query += " ORDER BY created_at DESC LIMIT ?"
+        params.append(limit)
+        with self.connection() as con:
+            rows = con.execute(query, params).fetchall()
+        results = []
+        for row in rows:
+            record = dict(row)
+            record["args"] = json.loads(record.pop("args_json"))
+            results.append(record)
+        return results
+
     def get_approval(self, approval_id: str) -> dict[str, Any]:
         with self.connection() as con:
             row = con.execute("SELECT * FROM approvals WHERE id=?", (approval_id,)).fetchone()

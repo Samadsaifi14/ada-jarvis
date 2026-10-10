@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     port: int = 47821
     db_path: Path = Path("data/ada.db")
     data_dir: Path = Path("data")
+    api_token: str = ""
 
     llm_base_url: str = "http://127.0.0.1:11434"
     llm_model: str = "qwen3:8b"

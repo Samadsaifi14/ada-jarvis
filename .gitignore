@@ -22,3 +22,7 @@ models/
 .DS_Store
 Thumbs.db
 .n8n/
+node_modules/
+.next/
+next-env.d.ts
+local-bridge/*.log

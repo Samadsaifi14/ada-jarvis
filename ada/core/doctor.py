@@ -6,7 +6,6 @@ from pathlib import Path
 import httpx
 
 from ada.core.runtime import Runtime
-from ada.voice.io import AudioIO
 
 
 async def run_doctor(runtime: Runtime) -> dict:
@@ -31,6 +30,8 @@ async def run_doctor(runtime: Runtime) -> dict:
     }
 
     try:
+        from ada.voice.io import AudioIO
+
         devices = AudioIO.devices()
         inputs = [x for x in devices if x["inputs"] > 0]
         outputs = [x for x in devices if x["outputs"] > 0]
@@ -39,7 +40,7 @@ async def run_doctor(runtime: Runtime) -> dict:
             "input_devices": inputs,
             "output_devices": outputs,
         }
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - missing optional voice subsystem is a soft failure
         checks["audio"] = {"ok": False, "error": str(exc)}
 
     checks["google"] = {
@@ -57,7 +58,7 @@ async def run_doctor(runtime: Runtime) -> dict:
             async with httpx.AsyncClient(timeout=3) as client:
                 response = await client.get(url)
             checks[name] = {"ok": response.status_code < 500, "status": response.status_code}
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - optional remote subsystem is a soft failure
             checks[name] = {"ok": False, "error": str(exc)}
 
     await ping("n8n", s.n8n_base_url)
