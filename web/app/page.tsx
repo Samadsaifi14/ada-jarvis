@@ -1,10 +1,66 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 
 type Mode = 'prompt' | 'command';
 type Approval = { id: string; action: string; args: Record<string, unknown>; created_at: string };
+
+type SpeechAlternative = { transcript: string };
+type SpeechResult = { isFinal: boolean; 0: SpeechAlternative };
+type SpeechResultEvent = { resultIndex: number; results: ArrayLike<SpeechResult> };
+
+type SpeechRecognitionLike = {
+  lang: string;
+  interimResults: boolean;
+  continuous: boolean;
+  start(): void;
+  abort(): void;
+  onresult: ((event: SpeechResultEvent) => void) | null;
+  onend: (() => void) | null;
+  onerror: (() => void) | null;
+};
+
+function getSpeechRecognition(): (new () => SpeechRecognitionLike) | null {
+  if (typeof window === 'undefined') return null;
+  const anyWindow = window as unknown as {
+    SpeechRecognition?: new () => SpeechRecognitionLike;
+    webkitSpeechRecognition?: new () => SpeechRecognitionLike;
+  };
+  return anyWindow.SpeechRecognition ?? anyWindow.webkitSpeechRecognition ?? null;
+}
+
+const VOICE_PREFERENCES: RegExp[] = [
+  /Google UK English Female/,
+  /Google UK English Male/,
+  /Google US English/,
+  /Microsoft (Amara|Aria|David|Emma|George|Guy|Jenny|Sonia|Zira)/i,
+];
+
+function pickVoice(): SpeechSynthesisVoice | null {
+  const voices = window.speechSynthesis.getVoices();
+  return (
+    voices.find((voice) => voice.lang.startsWith('en') && VOICE_PREFERENCES.some((r) => r.test(voice.name))) ??
+    voices.find((voice) => voice.lang.startsWith('en')) ??
+    null
+  );
+}
+
+function splitSentences(text: string, maxChunk = 180): string[] {
+  const parts = text.replace(/\s+/g, ' ').match(/[^.!?\n]+[.!?]*/g) ?? [text];
+  const chunks: string[] = [];
+  let current = '';
+  for (const part of parts) {
+    if (current && current.length + part.length > maxChunk) {
+      chunks.push(current.trim());
+      current = part;
+    } else {
+      current += part;
+    }
+  }
+  if (current.trim()) chunks.push(current.trim());
+  return chunks;
+}
 
 const shell: CSSProperties = {
   border: '1px solid #1f2b36',
@@ -19,6 +75,27 @@ export default function HomePage() {
   const [busy, setBusy] = useState(false);
   const [output, setOutput] = useState('');
   const [approvals, setApprovals] = useState<Approval[]>([]);
+  const [listening, setListening] = useState(false);
+  const [speaking, setSpeaking] = useState(false);
+  const [autoSpeak, setAutoSpeak] = useState(true);
+  const [speechError, setSpeechError] = useState('');
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const speakSessionRef = useRef(0);
+
+  useEffect(() => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+    }
+  }, []);
+
+  useEffect(
+    () => () => {
+      speakSessionRef.current += 1;
+      recognitionRef.current?.abort();
+      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    },
+    []
+  );
 
   const refreshApprovals = useCallback(async () => {
     try {
@@ -36,12 +113,48 @@ export default function HomePage() {
     return () => clearInterval(timer);
   }, [refreshApprovals]);
 
-  async function send() {
-    if (!input.trim() || busy) return;
+  function stopSpeaking() {
+    speakSessionRef.current += 1;
+    setSpeaking(false);
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+  }
+
+  function speak(text: string) {
+    if (!('speechSynthesis' in window) || !text.trim() || !autoSpeak) return;
+    const session = ++speakSessionRef.current;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.resume();
+    const chunks = splitSentences(text);
+    setSpeaking(true);
+    let index = 0;
+    const speakNext = () => {
+      if (session !== speakSessionRef.current || index >= chunks.length) {
+        setSpeaking(false);
+        return;
+      }
+      const utterance = new SpeechSynthesisUtterance(chunks[index++]);
+      const voice = pickVoice();
+      if (voice) utterance.voice = voice;
+      utterance.lang = voice?.lang ?? 'en-US';
+      utterance.onend = () => speakNext();
+      utterance.onerror = () => speakNext();
+      window.speechSynthesis.speak(utterance);
+    };
+    speakNext();
+  }
+
+  function playResponse(text?: string) {
+    if (!autoSpeak || !text?.trim() || !('speechSynthesis' in window)) return;
+    speak(text);
+  }
+
+  async function send(messageOverride?: string) {
+    const message = (messageOverride ?? input).trim();
+    if (!message || busy) return;
     setBusy(true);
     setOutput('…');
     try {
-      const body = mode === 'prompt' ? { prompt: input } : { command: input };
+      const body = mode === 'prompt' ? { prompt: message } : { command: message };
       const res = await fetch('/api/agent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -49,11 +162,67 @@ export default function HomePage() {
       });
       const data = await res.json();
       setOutput(JSON.stringify(data, null, 2));
+      const reply = typeof data?.result?.text === 'string' ? data.result.text : undefined;
+      if (reply) {
+        playResponse(reply);
+      } else if (data?.error) {
+        playResponse(`ADA says: ${data.error}`);
+      }
       if (data.result?.pending_approvals?.length) refreshApprovals();
     } catch (err) {
       setOutput(String(err));
+      playResponse('ADA is unavailable right now.');
     } finally {
       setBusy(false);
+    }
+  }
+
+  function toggleListen() {
+    const Recognizer = getSpeechRecognition();
+    if (!Recognizer) {
+      setSpeechError('Speech recognition is not supported in this browser. Try Chrome or Edge.');
+      return;
+    }
+    if (listening) {
+      recognitionRef.current?.abort();
+      return;
+    }
+    setSpeechError('');
+    const rec = new Recognizer();
+    rec.lang = 'en-US';
+    rec.interimResults = true;
+    rec.continuous = false;
+    let finalTranscript = '';
+    rec.onresult = (event) => {
+      let interim = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const result = event.results[i];
+        const chunk = result[0].transcript;
+        if (result.isFinal) finalTranscript += chunk;
+        else interim += chunk;
+      }
+      setInput(finalTranscript + interim);
+    };
+    rec.onend = () => {
+      setListening(false);
+      recognitionRef.current = null;
+      if (finalTranscript.trim()) send(finalTranscript);
+    };
+    rec.onerror = () => {
+      setListening(false);
+      recognitionRef.current = null;
+    };
+    recognitionRef.current = rec;
+    rec.start();
+    setListening(true);
+  }
+
+  function toggleSpeak() {
+    if (autoSpeak) {
+      stopSpeaking();
+      setAutoSpeak(false);
+    } else {
+      setAutoSpeak(true);
     }
   }
 
@@ -118,12 +287,52 @@ export default function HomePage() {
             resize: 'vertical',
           }}
         />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, marginBottom: 10 }}>
+          <button
+            onClick={toggleListen}
+            disabled={busy}
+            style={{
+              background: listening ? '#7f1d1d' : '#131a21',
+              color: listening ? '#fecaca' : '#8296a8',
+              border: '1px solid #1f2b36',
+              borderRadius: 4,
+              padding: '6px 14px',
+              cursor: busy ? 'wait' : 'pointer',
+              fontFamily: 'inherit',
+              fontSize: 12,
+              textTransform: 'uppercase',
+            }}
+          >
+            {listening ? 'Stop Mic' : 'Mic'}
+          </button>
+          <button
+            onClick={toggleSpeak}
+            style={{
+              background: autoSpeak ? '#14532d' : '#131a21',
+              color: autoSpeak ? '#bbf7d0' : '#8296a8',
+              border: '1px solid #1f2b36',
+              borderRadius: 4,
+              padding: '6px 14px',
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+              fontSize: 12,
+              textTransform: 'uppercase',
+            }}
+          >
+            Speak {autoSpeak ? 'On' : 'Off'}
+          </button>
+          {speaking && <span style={{ fontSize: 11, color: '#4ade80' }}>Talking…</span>}
+          <span style={{ fontSize: 11, color: '#5b6b7a' }}>
+            {listening ? 'Listening — speak now' : 'Mic uses browser speech; press speak to hear responses'}
+          </span>
+        </div>
+        {speechError && <div style={{ fontSize: 11, color: '#f87171', marginBottom: 8 }}>{speechError}</div>}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
           <span style={{ fontSize: 11, color: '#5b6b7a' }}>
             commands run through ADA&apos;s SAFE/ASK/BLOCK policy — risky actions need approval
           </span>
           <button
-            onClick={send}
+            onClick={() => send()}
             disabled={busy || !input.trim()}
             style={{
               background: busy ? '#14532d' : '#16a34a',
