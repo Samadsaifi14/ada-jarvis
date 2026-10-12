@@ -20,6 +20,7 @@ const TextReveal: React.FC<{
     textSpan.style.display = 'inline-block';
     element.appendChild(textSpan);
 
+    // GSAP animation runs after mount
     gsap.fromTo(
       textSpan,
       { y: 20, opacity: 0 },

@@ -8,61 +8,43 @@ import WebGLCursor from '@/components/WebGLCursor';
 
 const Option3ScientificStorytelling = () => {
   useEffect(() => {
-    // Story progression animation
-    const timeline = gsap.timeline({
-      scrollTrigger: {
-        trigger: '.story-section',
-        start: 'top bottom',
-        end: 'bottom top',
-        scrub: 0.5,
-      },
-    });
+    // Story progression with scrollTrigger-like effect using scroll position
+    const storySection = document.querySelector('.story-section');
+    if (storySection) {
+      const onScroll = () => {
+        const scrollY = window.scrollY;
+        const trigger = scrollY > 100;
+        if (trigger) {
+          gsap.fromTo(
+            '.bio-input, .analysis-section, .evidence-section',
+            { y: 20, opacity: 0 },
+            {
+              y: 0,
+              opacity: 1,
+              duration: 1,
+              ease: 'power2.out',
+            }
+          );
+          window.removeEventListener('scroll', onScroll);
+        }
+      };
+      window.addEventListener('scroll', onScroll);
+    }
 
-    timeline
-      .from('.bio-input', { y: 20, opacity: 0, duration: 0.6 })
-      .from('.analysis-section', { y: 20, opacity: 0, duration: 0.6 }, '-=0.3')
-      .from('.evidence-section', { y: 20, opacity: 0, duration: 0.6 }, '-=0.3');
-
-    // Panel scroll triggers
-    gsap.from('.input-card', {
-      opacity: 0,
-      x: -30,
-      duration: 0.8,
-      ease: 'power2.out',
-      scrollTrigger: {
-        trigger: '.input-card',
-        start: 'top 80%',
-        end: 'bottom 20%',
-        toggleActions: 'play reverse play reverse',
-      },
-    });
-
-    gsap.from('.results-card', {
-      opacity: 0,
-      x: 30,
-      duration: 0.8,
-      ease: 'power2.out',
-      scrollTrigger: {
-        trigger: '.results-card',
-        start: 'top 80%',
-        end: 'bottom 20%',
-        toggleActions: 'play reverse play reverse',
-      },
-    });
-
-    // Cursor feedback on scientific elements
-    document.addEventListener('mouseover', (e) => {
-      const target = e.target as HTMLElement;
-      if (target.classList.contains('evidence-item')) {
-        gsap.to(target, { boxShadow: '0 0 20px #10b981', duration: 0.3 });
-      }
-    });
-
-    document.addEventListener('mouseout', (e) => {
-      const target = e.target as HTMLElement;
-      if (target.classList.contains('evidence-item')) {
-        gsap.to(target, { boxShadow: 'none', duration: 0.3 });
-      }
+    // Panel fade-in on load
+    const panels = document.querySelectorAll('.input-card, .results-card');
+    panels.forEach((panel, index) => {
+      gsap.fromTo(
+        panel,
+        { opacity: 0, x: index % 2 === 0 ? -30 : 30 },
+        {
+          opacity: 1,
+          x: 0,
+          duration: 0.8,
+          ease: 'power2.out',
+          delay: 0.1 * index,
+        }
+      );
     });
   }, []);
 
@@ -78,11 +60,11 @@ const Option3ScientificStorytelling = () => {
           <TextReveal text="From Biological Input → Analysis → Interpretable Evidence" className="text-reveal" />
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32, margin: '32px 0' }}>
+        <div style={{ display: 'grid', gap: 32, margin: '32px 0' }}>
           <div style={{ background: '#131a21', border: '1px solid #1f2b36', borderRadius: 8, padding: 24 }}>
             <h3 style={{ color: '#10b981', marginBottom: 16 }}>Biological Input</h3>
             <p style={{ color: '#64748b', fontSize: 14 }}>
-              Scroll through molecular data visualization. The scene responds to your position, revealing different protein structures and biological pathways.
+              Scroll through molecular data visualization. The scene responds to your position.
             </p>
             <ul style={{ color: '#94a3b8', fontSize: 13, lineHeight: 1.6 }}>
               <li>DNA sequencing data</li>
@@ -94,7 +76,7 @@ const Option3ScientificStorytelling = () => {
           <div style={{ background: '#131a21', border: '1px solid #1f2b36', borderRadius: 8, padding: 24 }}>
             <h3 style={{ color: '#10b981', marginBottom: 16 }}>Analysis</h3>
             <p style={{ color: '#64748b', fontSize: 14 }}>
-              Interactive analysis of biological findings with scroll-driven transitions between data perspectives.
+              Interactive analysis of biological findings.
             </p>
             <ul style={{ color: '#94a3b8', fontSize: 13, lineHeight: 1.6 }}>
               <li>Statistical validation</li>
@@ -107,7 +89,7 @@ const Option3ScientificStorytelling = () => {
         <div style={{ background: '#131a21', border: '1px solid #1f2b36', borderRadius: 8, padding: 24, margin: '32px 0' }}>
           <h3 style={{ color: '#10b981', marginBottom: 16 }}>Interpretable Evidence</h3>
           <p style={{ color: '#64748b', fontSize: 14 }}>
-            Final evidence presentation with restrained motion, clear typography, and accessible design. Results are presented clearly for practical research workflows.
+            Final evidence presentation with restrained motion, clear typography.
           </p>
           <div style={{ marginTop: 20, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
             <div style={{ color: '#94a3b8', fontSize: 13, lineHeight: 1.6 }}>
@@ -117,7 +99,7 @@ const Option3ScientificStorytelling = () => {
             </div>
             <div style={{ color: '#94a3b8', fontSize: 13, lineHeight: 1.6 }}>
               <strong>Method:</strong> Maximum likelihood estimation<br />
-              <strong>Significance:</strong> p is less than 0.001...<br />
+              <strong>Significance:</strong> p is less than 0.001<br />
               <strong>Reproducibility:</strong> High
             </div>
           </div>

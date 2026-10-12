@@ -7,35 +7,21 @@ import TextReveal from '@/components/TextReveal';
 import WebGLCursor from '@/components/WebGLCursor';
 
 const Option1ImmersiveLanding = () => {
-  const revealRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
-    // GSAP scene entrance animation
-    gsap.from('.spline-scene', {
-      y: 20,
-      opacity: 0,
-      duration: 1.5,
-      ease: 'power2.out',
-      delay: 0.5,
-    });
-
-    // Text reveals
-    gsap.from('.text-reveal', {
-      y: 30,
-      opacity: 0,
-      duration: 0.8,
-      stagger: 0.2,
-      ease: 'power2.out',
-      delay: 1,
-    });
-
-    // Cursor pulse effect
-    gsap.to('.cursor-pulse', {
-      opacity: 0.5,
-      duration: 2,
-      repeat: -1,
-      yoyo: true,
-      ease: 'power1.inOut',
+    // Text reveals - animate after mount
+    const reveals = document.querySelectorAll('.text-reveal');
+    reveals.forEach((reveal, index) => {
+      gsap.fromTo(
+        reveal.firstElementChild,
+        { y: 20, opacity: 0 },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.8,
+          ease: 'power2.out',
+          delay: 0.3 + index * 0.1,
+        }
+      );
     });
   }, []);
 
@@ -59,7 +45,7 @@ const Option1ImmersiveLanding = () => {
           margin: '0 auto',
         }}>
           Scroll through the molecular scene to explore biological data visualization.<br />
-          <span style={{ color: '#10b981' }}>🌀</span> Scroll-driven camera transitions{'          '}
+          <span style={{ color: '#10b981' }}>🌀</span> Scroll-driven camera transitions
         </p>
 
         <div style={{ borderTop: '1px solid #1f2b36', padding: '24px 0', margin: '32px 0' }}>

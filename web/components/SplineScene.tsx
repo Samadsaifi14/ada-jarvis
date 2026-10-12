@@ -8,15 +8,9 @@ const SplineScene: React.FC = () => {
   useEffect(() => {
     if (!splineRef.current) return;
 
-    // Initialize Spline scene placeholder
-    // In production, replace the div with actual Spline embed
     const scene = splineRef.current;
+    scene.style.opacity = '1';
 
-    // Markers for GSAP animations to target
-    scene.style.opacity = '0';
-    scene.style.transition = 'opacity 1.5s ease';
-
-    // Trigger in view animation (will be triggered by intersection observer)
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
@@ -41,10 +35,12 @@ const SplineScene: React.FC = () => {
         alignItems: 'center',
         justifyContent: 'center',
         overflow: 'hidden',
+        color: '#d7e0e8',
+        fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
       }}
     >
       <p style={{ color: '#64748b', fontSize: 14, textAlign: 'center' }}>
-        Spline scene will load here{' '}
+        Spline molecular scene{' '}
         <span style={{ color: '#10b981' }}>🌀</span>
       </p>
     </div>
