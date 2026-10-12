@@ -71,7 +71,7 @@ const Option3ScientificStorytelling = () => {
       <WebGLCursor />
 
       <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-        <SplineScene className="scene-container" />
+        <SplineScene />
 
         <div style={{ margin: '32px 0' }}>
           <TextReveal text="BioNexus" className="text-reveal" />
@@ -117,7 +117,7 @@ const Option3ScientificStorytelling = () => {
             </div>
             <div style={{ color: '#94a3b8', fontSize: 13, lineHeight: 1.6 }}>
               <strong>Method:</strong> Maximum likelihood estimation<br />
-              <strong>Significance:</strong> p < 0.001&hellip;<br />
+              <strong>Significance:</strong> p is less than 0.001...<br />
               <strong>Reproducibility:</strong> High
             </div>
           </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import SplineScene from '@/components/SplineScene';
 import TextReveal from '@/components/TextReveal';
@@ -44,7 +44,7 @@ const Option1ImmersiveLanding = () => {
       <WebGLCursor />
 
       <div style={{ maxWidth: 960, margin: '0 auto' }}>
-        <SplineScene className="spline-scene" />
+        <SplineScene />
 
         <div style={{ margin: '32px 0' }}>
           <TextReveal text="BioNexus" className="text-reveal" />

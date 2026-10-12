@@ -111,8 +111,6 @@ export default function HomePage() {
           letterSpacing: 1,
           transition: 'color 0.2s',
         }}
-        onMouseOver={(e) => e.target.style.color = '#10b981'}
-        onMouseOut={(e) => e.target.style.color = '#8296a8'}
       >
         Option 1: Immersive Landing
       </a>
@@ -128,8 +126,6 @@ export default function HomePage() {
           letterSpacing: 1,
           transition: 'color 0.2s',
         }}
-        onMouseOver={(e) => e.target.style.color = '#10b981'}
-        onMouseOut={(e) => e.target.style.color = '#8296a8'}
       >
         Option 2: Full Redesign
       </a>
@@ -145,8 +141,6 @@ export default function HomePage() {
           letterSpacing: 1,
           transition: 'color 0.2s',
         }}
-        onMouseOver={(e) => e.target.style.color = '#10b981'}
-        onMouseOut={(e) => e.target.style.color = '#8296a8'}
       >
         Option 3: Storytelling
       </a>

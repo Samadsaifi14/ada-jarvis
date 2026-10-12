@@ -44,7 +44,7 @@ const Option2FullRedesign = () => {
       <WebGLCursor />
 
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-        <SplineScene className="scene-container" />
+        <SplineScene />
 
         <div style={{ margin: '32px 0' }}>
           <TextReveal text="BioNexus" className="text-reveal" />
