@@ -6,40 +6,17 @@ import SplineScene from '@/components/SplineScene';
 import TextReveal from '@/components/TextReveal';
 import WebGLCursor from '@/components/WebGLCursor';
 
-const Option3ScientificStorytelling = () => {
+const Option3Storyflow = () => {
   useEffect(() => {
-    // Story progression with scrollTrigger-like effect using scroll position
-    const storySection = document.querySelector('.story-section');
-    if (storySection) {
-      const onScroll = () => {
-        const scrollY = window.scrollY;
-        const trigger = scrollY > 100;
-        if (trigger) {
-          gsap.fromTo(
-            '.bio-input, .analysis-section, .evidence-section',
-            { y: 20, opacity: 0 },
-            {
-              y: 0,
-              opacity: 1,
-              duration: 1,
-              ease: 'power2.out',
-            }
-          );
-          window.removeEventListener('scroll', onScroll);
-        }
-      };
-      window.addEventListener('scroll', onScroll);
-    }
-
-    // Panel fade-in on load
-    const panels = document.querySelectorAll('.input-card, .results-card');
+    // Panels fade-in on load
+    const panels = document.querySelectorAll('.story-panel');
     panels.forEach((panel, index) => {
       gsap.fromTo(
         panel,
-        { opacity: 0, x: index % 2 === 0 ? -30 : 30 },
+        { opacity: 0, y: 24 },
         {
           opacity: 1,
-          x: 0,
+          y: 0,
           duration: 0.8,
           ease: 'power2.out',
           delay: 0.1 * index,
@@ -56,58 +33,58 @@ const Option3ScientificStorytelling = () => {
         <SplineScene />
 
         <div style={{ margin: '32px 0' }}>
-          <TextReveal text="BioNexus" className="text-reveal" />
-          <TextReveal text="From Biological Input → Analysis → Interpretable Evidence" className="text-reveal" />
+          <TextReveal text="ADA" className="text-reveal" />
+          <TextReveal text="From Voice Input → Local Reasoning → Approved Action" className="text-reveal" />
         </div>
 
         <div style={{ display: 'grid', gap: 32, margin: '32px 0' }}>
-          <div style={{ background: '#131a21', border: '1px solid #1f2b36', borderRadius: 8, padding: 24 }}>
-            <h3 style={{ color: '#10b981', marginBottom: 16 }}>Biological Input</h3>
+          <div className="story-panel" style={{ background: '#131a21', border: '1px solid #1f2b36', borderRadius: 8, padding: 24 }}>
+            <h3 style={{ color: '#10b981', marginBottom: 16 }}>Voice Input</h3>
             <p style={{ color: '#64748b', fontSize: 14 }}>
-              Scroll through molecular data visualization. The scene responds to your position.
+              Speak or type. ADA transcribes on-device and keeps everything local.
             </p>
             <ul style={{ color: '#94a3b8', fontSize: 13, lineHeight: 1.6 }}>
-              <li>DNA sequencing data</li>
-              <li>Protein structure arrays</li>
-              <li>Cellular pathway maps</li>
+              <li>Microphone → faster-whisper</li>
+              <li>CLI, web and phone entry points</li>
+              <li>No audio leaves your machine</li>
             </ul>
           </div>
 
-          <div style={{ background: '#131a21', border: '1px solid #1f2b36', borderRadius: 8, padding: 24 }}>
-            <h3 style={{ color: '#10b981', marginBottom: 16 }}>Analysis</h3>
+          <div className="story-panel" style={{ background: '#131a21', border: '1px solid #1f2b36', borderRadius: 8, padding: 24 }}>
+            <h3 style={{ color: '#10b981', marginBottom: 16 }}>Local Reasoning</h3>
             <p style={{ color: '#64748b', fontSize: 14 }}>
-              Interactive analysis of biological findings.
+              Ollama + Qwen plan the response with tools, memory and context.
             </p>
             <ul style={{ color: '#94a3b8', fontSize: 13, lineHeight: 1.6 }}>
-              <li>Statistical validation</li>
-              <li>Comparative analysis</li>
-              <li>Pattern recognition</li>
+              <li>Tool-calling loop</li>
+              <li>Memory and task context</li>
+              <li>Runs entirely on your PC</li>
             </ul>
           </div>
         </div>
 
-        <div style={{ background: '#131a21', border: '1px solid #1f2b36', borderRadius: 8, padding: 24, margin: '32px 0' }}>
-          <h3 style={{ color: '#10b981', marginBottom: 16 }}>Interpretable Evidence</h3>
+        <div className="story-panel" style={{ background: '#131a21', border: '1px solid #1f2b36', borderRadius: 8, padding: 24, margin: '32px 0' }}>
+          <h3 style={{ color: '#10b981', marginBottom: 16 }}>Approved Action</h3>
           <p style={{ color: '#64748b', fontSize: 14 }}>
-            Final evidence presentation with restrained motion, clear typography.
+            Every tool call passes a risk policy and audit log before it runs.
           </p>
           <div style={{ marginTop: 20, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
             <div style={{ color: '#94a3b8', fontSize: 13, lineHeight: 1.6 }}>
-              <strong>Confidence:</strong> 94.2%<br />
-              <strong>Sources:</strong> 12 peer-reviewed studies<br />
-              <strong>Last updated:</strong> 2024-01-15
+              <strong>Policy:</strong> SAFE / ASK / BLOCK<br />
+              <strong>Audit:</strong> Every event logged<br />
+              <strong>Secrets:</strong> Local only
             </div>
             <div style={{ color: '#94a3b8', fontSize: 13, lineHeight: 1.6 }}>
-              <strong>Method:</strong> Maximum likelihood estimation<br />
-              <strong>Significance:</strong> p is less than 0.001<br />
-              <strong>Reproducibility:</strong> High
+              <strong>Integrations:</strong> Google, GitHub, Windows<br />
+              <strong>Voice out:</strong> Piper TTS<br />
+              <strong>Approval:</strong> Risky actions gated
             </div>
           </div>
         </div>
 
         <div style={{ borderTop: '1px solid #1f2b36', padding: '24px 0', margin: '32px 0' }}>
           <p style={{ color: '#64748b', fontSize: 12 }}>
-            Reduced-motion support · Soft scientific color palette · Accessible typography · Lightweight mobile fallbacks
+            Reduced-motion support · Local-first palette · Accessible typography · Lightweight mobile fallbacks
           </p>
         </div>
       </div>
@@ -115,4 +92,4 @@ const Option3ScientificStorytelling = () => {
   );
 };
 
-export default Option3ScientificStorytelling;
+export default Option3Storyflow;

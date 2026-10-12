@@ -33,8 +33,8 @@ const Option1ImmersiveLanding = () => {
         <SplineScene />
 
         <div style={{ margin: '32px 0' }}>
-          <TextReveal text="BioNexus" className="text-reveal" />
-          <TextReveal text="Molecular Analysis Platform" className="text-reveal" />
+          <TextReveal text="ADA" className="text-reveal" />
+          <TextReveal text="Local-First Personal Operating Agent" className="text-reveal" />
         </div>
 
         <p style={{
@@ -44,13 +44,13 @@ const Option1ImmersiveLanding = () => {
           maxWidth: 600,
           margin: '0 auto',
         }}>
-          Scroll through the molecular scene to explore biological data visualization.<br />
-          <span style={{ color: '#10b981' }}>🌀</span> Scroll-driven camera transitions
+          Scroll through the interface that connects voice, memory and Windows actions.<br />
+          <span style={{ color: '#10b981' }}>◆</span> Local reasoning, approved actions
         </p>
 
         <div style={{ borderTop: '1px solid #1f2b36', padding: '24px 0', margin: '32px 0' }}>
           <p style={{ color: '#64748b', fontSize: 12 }}>
-            Soft scientific colors · Accessible text · Reduced-motion support available
+            Local-first · SAFE / ASK / BLOCK policy · Accessible, reduced-motion support
           </p>
         </div>
       </div>

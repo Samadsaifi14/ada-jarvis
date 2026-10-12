@@ -8,22 +8,6 @@ import WebGLCursor from '@/components/WebGLCursor';
 
 const Option2FullRedesign = () => {
   useEffect(() => {
-    // Scene entrance animation
-    const scene = document.querySelector('.spline-scene');
-    if (scene) {
-      gsap.fromTo(
-        scene,
-        { y: 20, opacity: 0 },
-        {
-          y: 0,
-          opacity: 1,
-          duration: 1.2,
-          ease: 'power3.out',
-          delay: 0.3,
-        }
-      );
-    }
-
     // Tool cards staggered entrance
     const cards = document.querySelectorAll('.tool-card');
     cards.forEach((card, index) => {
@@ -49,22 +33,22 @@ const Option2FullRedesign = () => {
         <SplineScene />
 
         <div style={{ margin: '32px 0' }}>
-          <TextReveal text="BioNexus" className="text-reveal" />
-          <TextReveal text="Complete Scientific Workflow" className="text-reveal" />
+          <TextReveal text="ADA" className="text-reveal" />
+          <TextReveal text="Your PC, Under One Command Surface" className="text-reveal" />
         </div>
 
         <div style={{ display: 'grid', gap: 24, margin: '32px 0' }}>
           <div style={{ background: '#131a21', border: '1px solid #1f2b36', borderRadius: 8, padding: 24 }} className="tool-card">
-            <h4 style={{ color: '#10b981', marginBottom: 12 }}>Molecular Visualization</h4>
-            <p style={{ color: '#64748b', fontSize: 14 }}>Interactive 3D molecular structures</p>
+            <h4 style={{ color: '#10b981', marginBottom: 12 }}>Voice & Chat</h4>
+            <p style={{ color: '#64748b', fontSize: 14 }}>Microphone → Whisper → local Qwen → spoken reply</p>
           </div>
           <div style={{ background: '#131a21', border: '1px solid #1f2b36', borderRadius: 8, padding: 24 }} className="tool-card">
-            <h4 style={{ color: '#10b981', marginBottom: 12 }}>Data Analysis</h4>
-            <p style={{ color: '#64748b', fontSize: 14 }}>Scroll-driven charts and graphs</p>
+            <h4 style={{ color: '#10b981', marginBottom: 12 }}>Memory & Tasks</h4>
+            <p style={{ color: '#64748b', fontSize: 14 }}>Persistent SQLite memory, to-dos and schedules</p>
           </div>
           <div style={{ background: '#131a21', border: '1px solid #1f2b36', borderRadius: 8, padding: 24 }} className="tool-card">
-            <h4 style={{ color: '#10b981', marginBottom: 12 }}>Evidence Gallery</h4>
-            <p style={{ color: '#64748b', fontSize: 14 }}>Curated research evidence</p>
+            <h4 style={{ color: '#10b981', marginBottom: 12 }}>Approved Actions</h4>
+            <p style={{ color: '#64748b', fontSize: 14 }}>Allow-listed apps, files, Google, GitHub and more</p>
           </div>
         </div>
 

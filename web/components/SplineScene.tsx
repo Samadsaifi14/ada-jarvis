@@ -40,8 +40,8 @@ const SplineScene: React.FC = () => {
       }}
     >
       <p style={{ color: '#64748b', fontSize: 14, textAlign: 'center' }}>
-        Spline molecular scene{' '}
-        <span style={{ color: '#10b981' }}>🌀</span>
+        ADA control plane{' '}
+        <span style={{ color: '#10b981' }}>◆</span>
       </p>
     </div>
   );
