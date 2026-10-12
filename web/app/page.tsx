@@ -87,6 +87,71 @@ const shell: CSSProperties = {
 
 export default function HomePage() {
   const [mode, setMode] = useState<Mode>('prompt');
+
+  return (
+    <nav style={{
+      position: 'fixed',
+      top: 24,
+      left: 24,
+      zIndex: '1000',
+      background: '#0f151b',
+      border: '1px solid #1f2b36',
+      borderRadius: 8,
+      padding: '12px 20px',
+    }}>
+      <a
+        href="/option-1"
+        style={{
+          color: '#8296a8',
+          textDecoration: 'none',
+          marginRight: 24,
+          fontSize: 12,
+          fontWeight: 500,
+          textTransform: 'uppercase',
+          letterSpacing: 1,
+          transition: 'color 0.2s',
+        }}
+        onMouseOver={(e) => e.target.style.color = '#10b981'}
+        onMouseOut={(e) => e.target.style.color = '#8296a8'}
+      >
+        Option 1: Immersive Landing
+      </a>
+      <a
+        href="/option-2"
+        style={{
+          color: '#8296a8',
+          textDecoration: 'none',
+          marginRight: 24,
+          fontSize: 12,
+          fontWeight: 500,
+          textTransform: 'uppercase',
+          letterSpacing: 1,
+          transition: 'color 0.2s',
+        }}
+        onMouseOver={(e) => e.target.style.color = '#10b981'}
+        onMouseOut={(e) => e.target.style.color = '#8296a8'}
+      >
+        Option 2: Full Redesign
+      </a>
+      <a
+        href="/option-3"
+        style={{
+          color: '#8296a8',
+          textDecoration: 'none',
+          marginRight: 24,
+          fontSize: 12,
+          fontWeight: 500,
+          textTransform: 'uppercase',
+          letterSpacing: 1,
+          transition: 'color 0.2s',
+        }}
+        onMouseOver={(e) => e.target.style.color = '#10b981'}
+        onMouseOut={(e) => e.target.style.color = '#8296a8'}
+      >
+        Option 3: Storytelling
+      </a>
+    </nav>
+  );
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
   const [output, setOutput] = useState('');
