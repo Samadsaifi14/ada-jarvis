@@ -1,10 +1,22 @@
 'use client';
 
 import { useEffect } from 'react';
+import type { CSSProperties } from 'react';
 import { gsap } from 'gsap';
 import SplineScene from '@/components/SplineScene';
 import TextReveal from '@/components/TextReveal';
 import WebGLCursor from '@/components/WebGLCursor';
+
+const navLink: CSSProperties = {
+  color: '#8296a8',
+  textDecoration: 'none',
+  marginRight: 24,
+  fontSize: 12,
+  fontWeight: 500,
+  textTransform: 'uppercase',
+  letterSpacing: 1,
+  transition: 'color 0.2s',
+};
 
 const Option2FullRedesign = () => {
   useEffect(() => {
@@ -28,6 +40,20 @@ const Option2FullRedesign = () => {
   return (
     <main style={{ minHeight: '100vh', padding: '32px 20px' }}>
       <WebGLCursor />
+
+      <nav style={{
+        position: 'fixed',
+        top: 24,
+        left: 24,
+        zIndex: '1000',
+        background: '#0f151b',
+        border: '1px solid #1f2b36',
+        borderRadius: 8,
+        padding: '12px 20px',
+      }}>
+        <a href="/" style={navLink}>Home</a>
+        <a href="/command" style={navLink}>Command Center</a>
+      </nav>
 
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
         <SplineScene />
